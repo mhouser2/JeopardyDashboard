@@ -10,10 +10,12 @@ database_url = os.getenv("database_url_jeopardy")
 
 engine = create_engine(database_url)
 
-shows_query = f"""SELECT CONCAT('Show Number #', show_number, ' - ', to_char(air_date, 'Day,  Month DD, YYYY')) FROM games_view ORDER BY show_number 
-                            """
+shows_query = f"""SELECT CONCAT('Show Number #', show_number, ' - ', to_char(air_date, 'Day,  Month DD, YYYY')) FROM games_view ORDER BY show_number """
 shows = pd.read_sql(shows_query, con=engine).squeeze()
+
 engine.dispose()
+
+
 
 register_page(
     __name__,

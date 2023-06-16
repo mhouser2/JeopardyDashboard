@@ -193,6 +193,7 @@ def find_data(search_destination, term, exact="Contains"):
         FROM clues_view
         WHERE {search_destination_sql} ILIKE '%%{term}%%' or {search_destination_sql} ILIKE '{term}%%' or {search_destination_sql} ILIKE '%%{term}'
         ORDER BY air_date desc
+        
         """
         clues = pd.read_sql(query_clues, con=engine)
         clues.columns = [

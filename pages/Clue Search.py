@@ -95,7 +95,7 @@ def filter_clues(clue_input, search, search_type):
                 ]
             ]
 
-            crs = dff[
+            correct_responses = dff[
                 [
                     "Air Date",
                     "Round",
@@ -105,7 +105,7 @@ def filter_clues(clue_input, search, search_type):
                     "Number Correct",
                 ]
             ]
-            crs.columns = [
+            correct_responses.columns = [
                 "Air Date",
                 "Round",
                 "Clue Value",
@@ -125,7 +125,7 @@ def filter_clues(clue_input, search, search_type):
                         column: {"value": str(value), "type": "markdown"}
                         for column, value in row.items()
                     }
-                    for row in crs.to_dict("records")
+                    for row in correct_responses.to_dict("records")
                 ],
                 page_size=15,
                 style_data={"whiteSpace": "normal", "height": "auto"},
@@ -133,7 +133,7 @@ def filter_clues(clue_input, search, search_type):
                 filter_action="native",
                 export_format="csv",
             )
-            crs.columns = [
+            correct_responses.columns = [
                 "Air Date",
                 "Round",
                 "Clue Value",
@@ -142,19 +142,19 @@ def filter_clues(clue_input, search, search_type):
                 "Number Correct",
             ]
 
-            pt = crs[crs["Round"] != "FJ"].pivot_table(
+            pivot_table_correct_responses = correct_responses[correct_responses["Round"] != "FJ"].pivot_table(
                 index="Correct Response",
                 values=["Number Correct"],
                 aggfunc={"Number Correct": [np.size, np.sum]},
             )
-            pt.columns = [" ".join(col) for col in pt.columns.values]
-            pt.columns = ["Count", "Answered Correct"]
-            pt["Answered Correct %"] = pt["Answered Correct"] / pt["Count"]
-            pt = pt.sort_values(by="Count", ascending=False).reset_index().round(2)
+            pivot_table_correct_responses.columns = [" ".join(col) for col in pivot_table_correct_responses.columns.values]
+            pivot_table_correct_responses.columns = ["Count", "Answered Correct"]
+            pivot_table_correct_responses["Answered Correct %"] = pivot_table_correct_responses["Answered Correct"] / pivot_table_correct_responses["Count"]
+            pivot_table_correct_responses = pivot_table_correct_responses.sort_values(by="Count", ascending=False).reset_index().round(2)
 
-            table2 = dash_table.DataTable(
-                data=pt.to_dict("records"),
-                columns=[{"name": i, "id": i} for i in pt.columns],
+            dash_table_correct_responses = dash_table.DataTable(
+                data=pivot_table_correct_responses.to_dict("records"),
+                columns=[{"name": i, "id": i} for i in pivot_table_correct_responses.columns],
                 page_size=10,
                 style_data={"whiteSpace": "normal", "height": "auto"},
                 style_cell={"textAlign": "left", "height": "auto"},
@@ -162,19 +162,19 @@ def filter_clues(clue_input, search, search_type):
                 filter_action="native",
             )
 
-            pt2 = crs[crs["Round"] != "FJ"].pivot_table(
+            pivot_table_categories = correct_responses[correct_responses["Round"] != "FJ"].pivot_table(
                 index="Category",
                 values=["Number Correct"],
                 aggfunc={"Number Correct": [np.size, np.sum]},
             )
-            pt2.columns = [" ".join(col) for col in pt2.columns.values]
-            pt2.columns = ["Count", "Answered Correct"]
-            pt2["Answered Correct %"] = pt2["Answered Correct"] / pt2["Count"]
-            pt2 = pt2.sort_values(by="Count", ascending=False).reset_index().round(2)
+            pivot_table_categories.columns = [" ".join(col) for col in pivot_table_categories.columns.values]
+            pivot_table_categories.columns = ["Count", "Answered Correct"]
+            pivot_table_categories["Answered Correct %"] = pivot_table_categories["Answered Correct"] / pivot_table_categories["Count"]
+            pivot_table_categories = pivot_table_categories.sort_values(by="Count", ascending=False).reset_index().round(2)
 
-            table3 = dash_table.DataTable(
-                data=pt2.to_dict("records"),
-                columns=[{"name": i, "id": i} for i in pt2.columns],
+            dash_table_categories = dash_table.DataTable(
+                data=pivot_table_categories.to_dict("records"),
+                columns=[{"name": i, "id": i} for i in pivot_table_categories.columns],
                 page_size=10,
                 style_data={"whiteSpace": "normal", "height": "auto"},
                 style_cell={"textAlign": "left", "height": "auto"},
@@ -190,9 +190,9 @@ def filter_clues(clue_input, search, search_type):
                     dbc.Row(
                         [
                             dbc.Col(
-                                [html.H2("Correct Response Summary"), table2], width=5
+                                [html.H2("Correct Response Summary"), dash_table_correct_responses], width=5
                             ),
-                            dbc.Col([html.H2("Category Summary"), table3], width=5),
+                            dbc.Col([html.H2("Category Summary"), dash_table_categories], width=5),
                         ]
                     ),
                 ]

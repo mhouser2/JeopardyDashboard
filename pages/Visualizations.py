@@ -29,7 +29,6 @@ max_air_date_query = f"""SELECT MAX(air_date) FROM clues_view
 max_air_date = pd.read_sql(max_air_date_query, con=engine).squeeze().date()
 engine.dispose()
 
-print(max_air_date)
 
 max_air_date_string = max_air_date.strftime("%Y-%m-%d")
 layout = dbc.Container(
@@ -132,8 +131,6 @@ layout = dbc.Container(
 )
 def plot_prob_correct(start_date, end_date):
     engine = create_engine(database_url)
-    print(end_date)
-    print(max_air_date_string)
     if start_date == "2001-11-26" and end_date == max_air_date_string:
         clues_query = f"""
                         SELECT * FROM clue_prob_correct

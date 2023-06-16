@@ -179,7 +179,8 @@ def get_champions(champion):
 
     dff_clues["air_date"] = pd.DatetimeIndex(dff_clues["air_date"]).strftime("%Y-%m-%d")
     dff_clues = dff_clues.sort_values(by=["show_number", "round", "order_number"])
-    table = dash_table.DataTable(
+
+    table_clues = dash_table.DataTable(
         data=dff_clues.to_dict("records"),
         columns=[{"name": i, "id": i} for i in dff_clues.columns],
         style_cell={"textAlign": "left", "height": "auto"},
@@ -235,6 +236,6 @@ def get_champions(champion):
         fig_streak,
         fig_earnings,
         indicator,
-        table,
+        table_clues,
         f"Clues from {champion}'s games ",
     )

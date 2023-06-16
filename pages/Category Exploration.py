@@ -228,7 +228,7 @@ def update(clickdata, search_destination, start_date, end_date):
         ]
     ]
 
-    table = dash_table.DataTable(
+    table_clues = dash_table.DataTable(
         data=data_to_show.to_dict("records"),
         columns=[{"name": i, "id": i, "hideable": True} for i in data_to_show.columns],
         style_cell={"textAlign": "left", "height": "auto"},
@@ -239,19 +239,19 @@ def update(clickdata, search_destination, start_date, end_date):
         export_format="csv",
     )
 
-    pt2 = data_to_show[data_to_show["Round"] != "FJ"].pivot_table(
+    pivot_table = data_to_show[data_to_show["Round"] != "FJ"].pivot_table(
         index=f"{search_destination_flipped}",
         values=["Number Correct"],
         aggfunc={"Number Correct": [np.size, np.sum]},
     )
-    pt2.columns = [" ".join(col) for col in pt2.columns.values]
-    pt2.columns = ["Count", "Answered Correct"]
-    pt2["Answered Correct %"] = pt2["Answered Correct"] / pt2["Count"]
-    pt2 = pt2.sort_values(by="Count", ascending=False).reset_index().round(2)
+    pivot_table.columns = [" ".join(col) for col in pivot_table.columns.values]
+    pivot_table.columns = ["Count", "Answered Correct"]
+    pivot_table["Answered Correct %"] = pivot_table["Answered Correct"] / pivot_table["Count"]
+    pivot_table = pivot_table.sort_values(by="Count", ascending=False).reset_index().round(2)
 
-    table3 = dash_table.DataTable(
-        data=pt2.to_dict("records"),
-        columns=[{"name": i, "id": i} for i in pt2.columns],
+    dash_pivot_table = dash_table.DataTable(
+        data=pivot_table.to_dict("records"),
+        columns=[{"name": i, "id": i} for i in pivot_table.columns],
         page_size=10,
         style_data={"whiteSpace": "normal", "height": "auto"},
         style_cell={"textAlign": "left", "height": "auto"},
@@ -263,10 +263,10 @@ def update(clickdata, search_destination, start_date, end_date):
     return dbc.Row(
         [
             html.H2(f"{search_destination}={clickdata_y}"),
-            dbc.Row(dbc.Col(table, width=10)),
+            dbc.Row(dbc.Col(table_clues, width=10)),
             html.H2(
                 f"Most Common {search_destination_flipped} for {search_destination}={clickdata_y}"
             ),
-            dbc.Row(dbc.Col(table3, width=6)),
+            dbc.Row(dbc.Col(dash_pivot_table, width=6)),
         ]
     )
