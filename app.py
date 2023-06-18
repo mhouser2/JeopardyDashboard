@@ -12,7 +12,7 @@ app = Dash(
     ],
 )
 server = app.server
-server.secret_key = os.environ.get("secret_key", "secret")
+#server.secret_key = os.environ.get("secret_key", "secret")
 
 
 explanation_string_1 = "Jeopardy! is a trivia game show where 3 contestants compete to earn the highest score. "
@@ -63,11 +63,11 @@ app.layout = dbc.Container(
                         html.Br(),
                         explanation_string_6,
                     ],
-                    style={"fontSize": 24},
+                    style={"fontSize": 16},
                 ),
             ]
         ),
-        dbc.Row([dbc.Col(sidebar, width=4)]),
+        dbc.Row([dbc.Col(sidebar, width=6)]),
         html.Hr(),
         dbc.Row([dbc.Col([dash.page_container], width=12)]),
     ],

@@ -28,11 +28,11 @@ explanation_string = """This dashboard creates a bar graph of the top 25 categor
 
 def serve_layout_responses():
     return dbc.Container(
-        [
-            html.H1("Category Exploration"),
-            html.P(explanation_string, style={"fontSize": 24}),
-            html.P("Air Date Range:"),
-            dcc.DatePickerRange(
+        [   dbc.Row([html.H1("Category Exploration"),
+                html.P(explanation_string, style={"fontSize": 16}),
+                dbc.Col([
+                html.P("Air Date Range:"),
+                dcc.DatePickerRange(
                 id="air-date-range-category-exploration",
                 min_date_allowed=date(1984, 9, 10),
                 max_date_allowed=date(2023, 6, 9),
@@ -48,7 +48,7 @@ def serve_layout_responses():
                     id="search-eda",
                     clearable=False,
                 ),
-                width=2,
+
             ),
             html.P("Input search term:"),
             dbc.Col(
@@ -61,31 +61,21 @@ def serve_layout_responses():
                     html_size="30",
                     value="",
                 ),
-                width=2,
+
             ),
             html.P("Number to Offset"),
             dbc.Col(
                 dbc.Input(
                     type="number", min=0, max=100000, step=5, value=0, id="offset"
                 ),
-                width=2,
+
                 style={"marginBottom": "4.5em"},
-            ),
+            )], width=4),
+            dbc.Col([dcc.Graph(id="bar-graph-top")], width=8)]),
             dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            dcc.Graph(id="bar-graph-top"),
-                        ],
-                        width=10,
-                        style={"overflowY": "scroll", "height": 800},
-                    )
-                ]
+                dbc.Col(id="clickdata-clues", width=12)#, style={"marginTop": "2.5em"}
             ),
-            dbc.Row(
-                dbc.Col(id="clickdata-clues", width=10), style={"marginTop": "2.5em"}
-            ),
-            dbc.Row(dbc.Col(id="clickdata-responses", width=10)),
+            dbc.Row(dbc.Col(id="clickdata-responses", width=12)),
         ],
         fluid=True,
     )
@@ -125,7 +115,7 @@ def plot_categories(search_term, search_destination, offset, start_date, end_dat
             WHERE  {search_destination_sql} ilike '%%{search_term}%%' or {search_destination_sql} ilike '{search_term}%%' or {search_destination_sql} ilike '%%{search_term}' and correct_response <> '=' and air_date between '{start_date}' and '{end_date}'
             GROUP BY {search_destination_sql}
             ORDER BY COUNT(correct_response) 
-            LIMIT 25 OFFSET {offset}
+            LIMIT 15 OFFSET {offset}
                        """
     else:
         query = f"""
@@ -135,7 +125,7 @@ def plot_categories(search_term, search_destination, offset, start_date, end_dat
                 GROUP BY {search_destination_sql} 
                 HAVING COUNT(correct_response) > 0
                 ORDER BY COUNT({search_destination_sql} ) desc
-                LIMIT 25 OFFSET {offset}
+                LIMIT 15 OFFSET {offset}
     """
 
     dff = pd.read_sql_query(query, con=engine)
@@ -149,13 +139,12 @@ def plot_categories(search_term, search_destination, offset, start_date, end_dat
         color_continuous_scale="RdYlGn",
     )
     fig.update_layout(
-        height=2500,
         title={
-            "text": f"{offset}-{25+offset} most frequent {search_destination}",
+            "text": f"{offset}-{15+offset} most frequent {search_destination}",
             "font": {"size": 30},
         },
     )
-    fig.update_xaxes(side="top")
+    #fig.update_xaxes(side="top")
 
     engine.dispose()
     return fig
@@ -231,8 +220,8 @@ def update(clickdata, search_destination, start_date, end_date):
     table_clues = dash_table.DataTable(
         data=data_to_show.to_dict("records"),
         columns=[{"name": i, "id": i, "hideable": True} for i in data_to_show.columns],
-        style_cell={"textAlign": "left", "height": "auto"},
-        page_size=15,
+        style_cell={"textAlign": "left", "height": "auto", 'fontSize': 12},
+        page_size=8,
         style_data={"whiteSpace": "normal", "height": "auto"},
         sort_action="native",
         filter_action="native",
@@ -252,9 +241,9 @@ def update(clickdata, search_destination, start_date, end_date):
     dash_pivot_table = dash_table.DataTable(
         data=pivot_table.to_dict("records"),
         columns=[{"name": i, "id": i} for i in pivot_table.columns],
-        page_size=10,
+        page_size=8,
         style_data={"whiteSpace": "normal", "height": "auto"},
-        style_cell={"textAlign": "left", "height": "auto"},
+        style_cell={"textAlign": "left", "height": "auto", 'fontSize': 12},
         sort_action="native",
         filter_action="native",
     )
@@ -262,11 +251,11 @@ def update(clickdata, search_destination, start_date, end_date):
 
     return dbc.Row(
         [
-            html.H2(f"{search_destination}={clickdata_y}"),
-            dbc.Row(dbc.Col(table_clues, width=10)),
-            html.H2(
+            html.H3(f"{search_destination}={clickdata_y}"),
+            dbc.Row(dbc.Col(table_clues, width=12)),
+            html.H3(
                 f"Most Common {search_destination_flipped} for {search_destination}={clickdata_y}"
             ),
-            dbc.Row(dbc.Col(dash_pivot_table, width=6)),
+            dbc.Row(dbc.Col(dash_pivot_table, width=9)),
         ]
     )

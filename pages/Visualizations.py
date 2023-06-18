@@ -6,7 +6,8 @@ import plotly.express as px
 from datetime import date
 from sqlalchemy import create_engine
 import os
-
+col_width = 9
+font_size = 16
 database_url = os.getenv("database_url_jeopardy")
 
 register_page(
@@ -34,7 +35,7 @@ max_air_date_string = max_air_date.strftime("%Y-%m-%d")
 layout = dbc.Container(
     [
         html.H1("Data Visualizations"),
-        html.P(explanation_string, style={"fontSize": 24}),
+        html.P(explanation_string, style={"fontSize": font_size}),
         dbc.Row(
             dbc.Col(
                 [
@@ -53,7 +54,7 @@ layout = dbc.Container(
         html.Hr(),
         dbc.Row(
             [
-                dbc.Col([dcc.Graph(id="daily-double-graph")], width=9),
+                dbc.Col([dcc.Graph(id="daily-double-graph")], width=col_width),
                 dbc.Col(
                     [
                         html.P(
@@ -61,58 +62,58 @@ layout = dbc.Container(
                             " a special clue that allows the contestant to wager however much money they have earned which only they can answer. "
                             "Knowing where the daily double is most likely to show up allows contestants to optimize their strategy. One strategy could be selecting clues with low probabilities of holding the daily double so they can "
                             "increase their score and then searching for the daily double in order to make a high wager. A more conservative strategy is to hunt for daily doubles early to prevent other contestants the opportunity to wager heavily.  ",
-                            style={"fontSize": 24},
+                            style={"fontSize": font_size},
                         )
                     ],
-                    width=3,
+                    width=12-col_width,
                 ),
             ]
         ),
         html.Hr(),
         dbc.Row(
             [
-                dbc.Col([dcc.Graph(id="answer-correct-graph")], width=9),
+                dbc.Col([dcc.Graph(id="answer-correct-graph")], width=col_width),
                 dbc.Col(
                     [
                         html.P(
                             "This heatmap shows the probability of a clue being answered correctly by a contestant given its location on the board. As expected, as clue values increase, clue difficulty also increases. "
                             "What's interesting is comparing the clues from the Jeopardy round to the Double Jeopardy round. The $800 clues in the Jeopardy round are slightly more difficult than the $800 clues in the Jeopardy round,"
                             " and the $2000 clues in the Double Jeopardy Round are much more difficult than the $1000 clues in the Jeopardy round. ",
-                            style={"fontSize": 24},
+                            style={"fontSize": font_size},
                         )
                     ],
-                    width=3,
+                    width=12-col_width,
                 ),
             ]
         ),
         html.Hr(),
         dbc.Row(
             [
-                dbc.Col([dcc.Graph(id="expected-value-graph")], width=9),
+                dbc.Col([dcc.Graph(id="expected-value-graph")], width=col_width),
                 dbc.Col(
                     [
                         html.P(
                             "This heatmap shows the expected value of each clue based on its location on the board. Effectively, this means that on average each clue in this location increases all contestants' scores by X amount. This metric combines both the clue's original value, as well as the number of contestants that answered correctly/incorrectly."
                             "What's interesting here is that the $1,600 clues in the Double Jeopardy round are approximately as valuable as the $2,000 clues, because they are comparatively much easier to answer. Additionally, columns 2 and 6 have slightly higher expected values than the other columns, typically because these are more gimmicky categories. ",
-                            style={"fontSize": 24},
+                            style={"fontSize": font_size},
                         )
                     ],
-                    width=3,
+                    width=12-col_width,
                 ),
             ]
         ),
         html.Hr(),
         dbc.Row(
             [
-                dbc.Col([dcc.Graph(id="fj-graph")], width=9),
+                dbc.Col([dcc.Graph(id="fj-graph")], width=col_width),
                 dbc.Col(
                     [
                         html.P(
                             "This graph shows the frequency of how many contestants answered Final Jeopardy correctly. Since regular clues are easier and only allow one person to be answered, it's interesting to see how all contestants perform when given the same opportunity against each other.",
-                            style={"fontSize": 24},
+                            style={"fontSize": font_size},
                         )
                     ],
-                    width=3,
+                    width=12-col_width,
                 ),
             ]
         ),
@@ -158,7 +159,7 @@ def plot_prob_correct(start_date, end_date):
         facet_col_wrap=2,
         color_continuous_scale="blues",
         text_auto=True,
-        height=800,
+        #height=550,
         labels=dict(y="Row", color="Percent Answered Correctly"),
         x=columns,
         y=rows,
@@ -218,7 +219,7 @@ def plot_prob_correct(start_date, end_date):
         facet_col_wrap=2,
         color_continuous_scale="blues",
         text_auto=True,
-        height=800,
+       # height=550,
         labels=dict(y="Row", color="Daily Double Probability"),
         x=columns,
         y=rows,
@@ -265,7 +266,7 @@ def plot_prob_correct(start_date, end_date):
         facet_col_wrap=2,
         color_continuous_scale="blues",
         text_auto=True,
-        height=800,
+    #    height=550,
         labels=dict(y="Row", color="Clue Location Expected Value"),
         x=columns,
         y=rows,
@@ -316,7 +317,7 @@ def plot_prob_correct(start_date, end_date):
         hover_data=["Number of Clues"],
     )
     fig_fj.update_layout(
-        height=800,
+        height=550,
         title={
             "text": "Final Jeopardy Results",
             "font": {"size": 30},

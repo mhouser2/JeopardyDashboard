@@ -29,7 +29,7 @@ def serve_layout_contestants():
     return dbc.Container(
         [
             html.H1("Champions Dashboard"),
-            html.P(explanation_string, style={"fontSize": 24}),
+            html.P(explanation_string, style={"fontSize": 16}),
             dbc.Row(
                 [
                     dbc.Col(
@@ -59,7 +59,7 @@ def serve_layout_contestants():
                 [
                     html.H2(id="contestant-clues"),
                     dbc.Col(
-                        id="correct-answers", width=8, style={"marginBottom": "4.5em"}
+                        id="correct-answers", width=12, style={"marginBottom": "4.5em"}
                     ),
                 ]
             ),
@@ -97,13 +97,13 @@ def get_champions(champion):
     fig_streak = px.histogram(dff, x="streak")
     fig_streak.add_vline(x=dff[dff["contestant"] == champion]["streak"].iloc[0])
     fig_streak.update_layout(
-        title=f"Returning Champion Winning Streaks, {champion} Selected", height=700
+        title=f"Returning Champion Winning Streaks, {champion} Selected"#, height=700
     )
 
     fig_earnings = px.histogram(dff, x="winnings")
     fig_earnings.add_vline(x=dff[dff["contestant"] == champion]["winnings"].iloc[0])
     fig_earnings.update_layout(
-        title=f"Returning Champion Winnings, {champion} Selected", height=700
+        title=f"Returning Champion Winnings, {champion} Selected"#, height=700
     )
 
     indicator = go.Figure()
@@ -113,7 +113,7 @@ def get_champions(champion):
             mode="number+delta",
             value=dff[dff["contestant"] == champion]["streak"].iloc[0],
             title={"text": "Win Streak"},
-            domain={"x": [0, 0.25], "y": [0.5, 1]},
+            domain={"x": [0, 0.33], "y": [0.5, 1]},
             delta={"reference": dff["streak"].median()},
         )
     )
@@ -123,7 +123,7 @@ def get_champions(champion):
             mode="number+delta",
             value=dff[dff["contestant"] == champion]["winnings"].iloc[0],
             title={"text": "Winnings as Champion"},
-            domain={"x": [0.25, 0.5], "y": [0.5, 1]},
+            domain={"x": [0.33, 0.66], "y": [0.5, 1]},
             delta={"reference": dff["winnings"].median()},
         )
     )
@@ -132,7 +132,7 @@ def get_champions(champion):
             mode="number+delta",
             value=dff[dff["contestant"] == champion]["average winnings"].iloc[0],
             title={"text": "Average Winnings"},
-            domain={"x": [0.5, 0.75], "y": [0.5, 1]},
+            domain={"x": [0.66, 1], "y": [0.5, 1]},
             delta={"reference": dff["average winnings"].median()},
         )
     )
@@ -140,7 +140,7 @@ def get_champions(champion):
     indicator.update_layout(
         title=f"{champion}'s Statistics <br><sup>and comparison to median champion</sup>",
         height=600,
-        font={"size": 24},
+        font={"size": 16},
     )
 
     query = f"""
@@ -183,8 +183,8 @@ def get_champions(champion):
     table_clues = dash_table.DataTable(
         data=dff_clues.to_dict("records"),
         columns=[{"name": i, "id": i} for i in dff_clues.columns],
-        style_cell={"textAlign": "left", "height": "auto"},
-        page_size=15,
+        style_cell={"textAlign": "left", "height": "auto", 'fontSize': 12},
+        page_size=10,
         style_data={"whiteSpace": "normal", "height": "auto"},
         sort_action="native",
         filter_action="native",
@@ -208,7 +208,7 @@ def get_champions(champion):
             value=100 * n_correct / total,
             number={"suffix": "%"},
             title={"text": "Percent of All Regular Clues Answered Correctly"},
-            domain={"x": [0, 0.25], "y": [0, 0.5]},
+            domain={"x": [0, 0.33], "y": [0, 0.5]},
         )
     )
 
@@ -218,7 +218,7 @@ def get_champions(champion):
             value=100 * n_correct / (n_correct + n_incorrect),
             number={"suffix": "%"},
             title={"text": "Percent of Responses Being Correct"},
-            domain={"x": [0.25, 0.5], "y": [0, 0.5]},
+            domain={"x": [0.33, 0.66], "y": [0, 0.5]},
         )
     )
     indicator.add_trace(
@@ -227,7 +227,7 @@ def get_champions(champion):
             value=100 * n_fj_correct / len(fj),
             number={"suffix": "%"},
             title={"text": "Percent of Final Jeopardy Clues Answered Correctly"},
-            domain={"x": [0.5, 0.75], "y": [0, 0.5]},
+            domain={"x": [0.66, 1], "y": [0, 0.5]},
         )
     )
 

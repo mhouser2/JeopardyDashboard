@@ -5,7 +5,7 @@ from JeopardyFunctions import pivot_game, game_progression
 import plotly.express as px
 from sqlalchemy import create_engine
 import os
-
+font_size = 14
 database_url = os.getenv("database_url_jeopardy")
 
 engine = create_engine(database_url)
@@ -33,7 +33,7 @@ The dashboard also shows the final scores for each contestant and the number of 
 layout = dbc.Container(
     [
         html.H1("Game Summary Dashboard"),
-        html.P(explanation_string, style={"fontSize": 24}),
+        html.P(explanation_string, style={"fontSize": 16}),
         dbc.Row(
             dbc.Col(
                 [
@@ -44,7 +44,7 @@ layout = dbc.Container(
                         clearable=False,
                     )
                 ],
-                width=3,
+                width=4,
             ),
         ),
         html.Hr(),
@@ -76,7 +76,8 @@ def get_data(show_number):
     final_scores = scores.iloc[:, 1:4]
     dds = scores.iloc[:, 4]
     dds_indexes = dds[dds == 1].index
-    fig = px.line(final_scores, height=800)
+    fig = px.line(final_scores#, height=800
+     )
     fig.update_layout(hovermode="x unified")
     fig.update_traces(mode="lines", hovertemplate=None)
 
@@ -102,6 +103,7 @@ def get_data(show_number):
             "width": "300px",
             "maxWidth": "300px",
             "whiteSpace": "normal",
+            'fontSize': font_size
         },
         style_data={"whiteSpace": "normal", "height": "20px"},
         fill_width=False,
@@ -123,6 +125,7 @@ def get_data(show_number):
             "width": "300px",
             "maxWidth": "300px",
             "whiteSpace": "normal",
+            'fontSize': font_size
         },
         style_data={"whiteSpace": "normal", "height": "auto"},
         fill_width=False,
@@ -143,6 +146,7 @@ def get_data(show_number):
             "width": "250px",
             "maxWidth": "250px",
             "whiteSpace": "normal",
+            'fontSize': font_size
         },
         style_data={"whiteSpace": "normal", "height": "200"},
         fill_width=False,
@@ -188,5 +192,5 @@ def get_data(show_number):
             dbc.Col(summary_table, width=4, style={"marginBottom": "2.5em"}),
             dbc.Row([dbc.Col([dcc.Graph(figure=fig)], width=12)]),
         ],
-        width=10,
+        width=12,
     )

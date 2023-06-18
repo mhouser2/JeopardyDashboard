@@ -25,7 +25,7 @@ allowing users to identify strength/weaknesses in categories across all contesta
 layout = dbc.Container(
     [
         html.H1("Clue Search Dashboard"),
-        html.P(explanation_string, style={"fontSize": 24}),
+        html.P(explanation_string, style={"fontSize": 16}),
         html.Hr(),
         html.P("Input search term:"),
         dbc.Col(
@@ -127,7 +127,7 @@ def filter_clues(clue_input, search, search_type):
                     }
                     for row in correct_responses.to_dict("records")
                 ],
-                page_size=15,
+                page_size=8,
                 style_data={"whiteSpace": "normal", "height": "auto"},
                 sort_action="native",
                 filter_action="native",
@@ -190,9 +190,9 @@ def filter_clues(clue_input, search, search_type):
                     dbc.Row(
                         [
                             dbc.Col(
-                                [html.H2("Correct Response Summary"), dash_table_correct_responses], width=5
+                                [html.H2("Correct Response Summary"), dash_table_correct_responses], width=6
                             ),
-                            dbc.Col([html.H2("Category Summary"), dash_table_categories], width=5),
+                            dbc.Col([html.H2("Category Summary"), dash_table_categories], width=6),
                         ]
                     ),
                 ]
