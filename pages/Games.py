@@ -5,6 +5,7 @@ from JeopardyFunctions import pivot_game, game_progression
 import plotly.express as px
 from sqlalchemy import create_engine
 import os
+
 font_size = 14
 database_url = os.getenv("database_url_jeopardy")
 
@@ -14,7 +15,6 @@ shows_query = f"""SELECT CONCAT('Show Number #', show_number, ' - ', to_char(air
 shows = pd.read_sql(shows_query, con=engine).squeeze()
 
 engine.dispose()
-
 
 
 register_page(
@@ -76,8 +76,7 @@ def get_data(show_number):
     final_scores = scores.iloc[:, 1:4]
     dds = scores.iloc[:, 4]
     dds_indexes = dds[dds == 1].index
-    fig = px.line(final_scores#, height=800
-     )
+    fig = px.line(final_scores)  # , height=800
     fig.update_layout(hovermode="x unified")
     fig.update_traces(mode="lines", hovertemplate=None)
 
@@ -103,7 +102,7 @@ def get_data(show_number):
             "width": "300px",
             "maxWidth": "300px",
             "whiteSpace": "normal",
-            'fontSize': font_size
+            "fontSize": font_size,
         },
         style_data={"whiteSpace": "normal", "height": "20px"},
         fill_width=False,
@@ -125,7 +124,7 @@ def get_data(show_number):
             "width": "300px",
             "maxWidth": "300px",
             "whiteSpace": "normal",
-            'fontSize': font_size
+            "fontSize": font_size,
         },
         style_data={"whiteSpace": "normal", "height": "auto"},
         fill_width=False,
@@ -146,7 +145,7 @@ def get_data(show_number):
             "width": "250px",
             "maxWidth": "250px",
             "whiteSpace": "normal",
-            'fontSize': font_size
+            "fontSize": font_size,
         },
         style_data={"whiteSpace": "normal", "height": "200"},
         fill_width=False,

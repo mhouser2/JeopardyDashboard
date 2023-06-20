@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 import os
 
 database_url = os.getenv("database_url_jeopardy")
+import psycopg2
 
 
 def pivot_game(show_number):
@@ -79,7 +80,6 @@ def pivot_game(show_number):
         fj_clue,
         fj_correct_response,
     )
-
 
 
 def game_progression(show_number):
@@ -180,49 +180,51 @@ def game_progression(show_number):
 
 
 def find_data(search_destination, term, exact="Contains"):
-    engine = create_engine(database_url)
+    conn = psycopg2.connect(database_url)
+    cur = conn.cursor()
     search_destination_sql_dict = {
         "Clue": "clue",
         "Category": "category",
         "Correct Response": "correct_response",
     }
+
+    clues_columns = [
+        "Air Date",
+        "Round",
+        "Clue Value",
+        "Category",
+        "Clue",
+        "Number Correct",
+        "Correct Response",
+    ]
+
     search_destination_sql = search_destination_sql_dict[search_destination]
     if exact == "Contains":
-        query_clues = f"""
+        query_clues = """
         SELECT air_date, round_id round, clue_value, category, clue, n_correct, correct_response
         FROM clues_view
-        WHERE {search_destination_sql} ILIKE '%%{term}%%' or {search_destination_sql} ILIKE '{term}%%' or {search_destination_sql} ILIKE '%%{term}'
+        WHERE {search_destination_sql} ILIKE '%{term}%'
         ORDER BY air_date desc
-        
-        """
-        clues = pd.read_sql(query_clues, con=engine)
-        clues.columns = [
-            "Air Date",
-            "Round",
-            "Clue Value",
-            "Category",
-            "Clue",
-            "Number Correct",
-            "Correct Response",
-        ]
-        engine.dispose()
+        """.format(
+            search_destination_sql=search_destination_sql, term=term
+        )
+        cur.execute(query_clues)
+        results = cur.fetchall()
+        clues = pd.DataFrame(results, columns=clues_columns)
         return clues
     else:
-        query_clues = f"""
+        query_clues = """
         SELECT air_date, round_id round, clue_value, category, clue, n_correct, correct_response
         FROM clues_view
         WHERE {search_destination_sql} ILIKE '{term}'
         ORDER BY air_date desc
-        """
-        clues = pd.read_sql(query_clues, con=engine)
-        clues.columns = [
-            "Air Date",
-            "Round",
-            "Clue Value",
-            "Category",
-            "Clue",
-            "Number Correct",
-            "Correct Response",
-        ]
-        engine.dispose()
+        """.format(
+            search_destination_sql=search_destination_sql, term=term
+        )
+        cur.execute(query_clues)
+        results = cur.fetchall()
+        clues = pd.DataFrame(results, columns=clues_columns)
         return clues
+
+    cur.close()
+    conn.close()

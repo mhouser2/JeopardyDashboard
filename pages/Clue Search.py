@@ -127,7 +127,7 @@ def filter_clues(clue_input, search, search_type):
                     }
                     for row in correct_responses.to_dict("records")
                 ],
-                page_size=8,
+                page_size=12,
                 style_data={"whiteSpace": "normal", "height": "auto"},
                 sort_action="native",
                 filter_action="native",
@@ -142,19 +142,32 @@ def filter_clues(clue_input, search, search_type):
                 "Number Correct",
             ]
 
-            pivot_table_correct_responses = correct_responses[correct_responses["Round"] != "FJ"].pivot_table(
+            pivot_table_correct_responses = correct_responses[
+                correct_responses["Round"] != "FJ"
+            ].pivot_table(
                 index="Correct Response",
                 values=["Number Correct"],
                 aggfunc={"Number Correct": [np.size, np.sum]},
             )
-            pivot_table_correct_responses.columns = [" ".join(col) for col in pivot_table_correct_responses.columns.values]
+            pivot_table_correct_responses.columns = [
+                " ".join(col) for col in pivot_table_correct_responses.columns.values
+            ]
             pivot_table_correct_responses.columns = ["Count", "Answered Correct"]
-            pivot_table_correct_responses["Answered Correct %"] = pivot_table_correct_responses["Answered Correct"] / pivot_table_correct_responses["Count"]
-            pivot_table_correct_responses = pivot_table_correct_responses.sort_values(by="Count", ascending=False).reset_index().round(2)
+            pivot_table_correct_responses["Answered Correct %"] = (
+                pivot_table_correct_responses["Answered Correct"]
+                / pivot_table_correct_responses["Count"]
+            )
+            pivot_table_correct_responses = (
+                pivot_table_correct_responses.sort_values(by="Count", ascending=False)
+                .reset_index()
+                .round(2)
+            )
 
             dash_table_correct_responses = dash_table.DataTable(
                 data=pivot_table_correct_responses.to_dict("records"),
-                columns=[{"name": i, "id": i} for i in pivot_table_correct_responses.columns],
+                columns=[
+                    {"name": i, "id": i} for i in pivot_table_correct_responses.columns
+                ],
                 page_size=10,
                 style_data={"whiteSpace": "normal", "height": "auto"},
                 style_cell={"textAlign": "left", "height": "auto"},
@@ -162,15 +175,26 @@ def filter_clues(clue_input, search, search_type):
                 filter_action="native",
             )
 
-            pivot_table_categories = correct_responses[correct_responses["Round"] != "FJ"].pivot_table(
+            pivot_table_categories = correct_responses[
+                correct_responses["Round"] != "FJ"
+            ].pivot_table(
                 index="Category",
                 values=["Number Correct"],
                 aggfunc={"Number Correct": [np.size, np.sum]},
             )
-            pivot_table_categories.columns = [" ".join(col) for col in pivot_table_categories.columns.values]
+            pivot_table_categories.columns = [
+                " ".join(col) for col in pivot_table_categories.columns.values
+            ]
             pivot_table_categories.columns = ["Count", "Answered Correct"]
-            pivot_table_categories["Answered Correct %"] = pivot_table_categories["Answered Correct"] / pivot_table_categories["Count"]
-            pivot_table_categories = pivot_table_categories.sort_values(by="Count", ascending=False).reset_index().round(2)
+            pivot_table_categories["Answered Correct %"] = (
+                pivot_table_categories["Answered Correct"]
+                / pivot_table_categories["Count"]
+            )
+            pivot_table_categories = (
+                pivot_table_categories.sort_values(by="Count", ascending=False)
+                .reset_index()
+                .round(2)
+            )
 
             dash_table_categories = dash_table.DataTable(
                 data=pivot_table_categories.to_dict("records"),
@@ -190,9 +214,16 @@ def filter_clues(clue_input, search, search_type):
                     dbc.Row(
                         [
                             dbc.Col(
-                                [html.H2("Correct Response Summary"), dash_table_correct_responses], width=6
+                                [
+                                    html.H2("Correct Response Summary"),
+                                    dash_table_correct_responses,
+                                ],
+                                width=6,
                             ),
-                            dbc.Col([html.H2("Category Summary"), dash_table_categories], width=6),
+                            dbc.Col(
+                                [html.H2("Category Summary"), dash_table_categories],
+                                width=6,
+                            ),
                         ]
                     ),
                 ]

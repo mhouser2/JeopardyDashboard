@@ -6,6 +6,7 @@ import plotly.express as px
 from datetime import date
 from sqlalchemy import create_engine
 import os
+
 col_width = 9
 font_size = 16
 database_url = os.getenv("database_url_jeopardy")
@@ -65,7 +66,7 @@ layout = dbc.Container(
                             style={"fontSize": font_size},
                         )
                     ],
-                    width=12-col_width,
+                    width=12 - col_width,
                 ),
             ]
         ),
@@ -82,7 +83,7 @@ layout = dbc.Container(
                             style={"fontSize": font_size},
                         )
                     ],
-                    width=12-col_width,
+                    width=12 - col_width,
                 ),
             ]
         ),
@@ -98,7 +99,7 @@ layout = dbc.Container(
                             style={"fontSize": font_size},
                         )
                     ],
-                    width=12-col_width,
+                    width=12 - col_width,
                 ),
             ]
         ),
@@ -113,7 +114,7 @@ layout = dbc.Container(
                             style={"fontSize": font_size},
                         )
                     ],
-                    width=12-col_width,
+                    width=12 - col_width,
                 ),
             ]
         ),
@@ -159,7 +160,7 @@ def plot_prob_correct(start_date, end_date):
         facet_col_wrap=2,
         color_continuous_scale="blues",
         text_auto=True,
-        #height=550,
+        # height=550,
         labels=dict(y="Row", color="Percent Answered Correctly"),
         x=columns,
         y=rows,
@@ -219,7 +220,7 @@ def plot_prob_correct(start_date, end_date):
         facet_col_wrap=2,
         color_continuous_scale="blues",
         text_auto=True,
-       # height=550,
+        # height=550,
         labels=dict(y="Row", color="Daily Double Probability"),
         x=columns,
         y=rows,
@@ -266,7 +267,7 @@ def plot_prob_correct(start_date, end_date):
         facet_col_wrap=2,
         color_continuous_scale="blues",
         text_auto=True,
-    #    height=550,
+        #    height=550,
         labels=dict(y="Row", color="Clue Location Expected Value"),
         x=columns,
         y=rows,

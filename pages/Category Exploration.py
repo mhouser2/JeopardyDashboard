@@ -7,6 +7,7 @@ import plotly.express as px
 import numpy as np
 from sqlalchemy import create_engine
 import os
+import psycopg2
 
 database_url = os.getenv("database_url_jeopardy")
 
@@ -28,52 +29,65 @@ explanation_string = """This dashboard creates a bar graph of the top 25 categor
 
 def serve_layout_responses():
     return dbc.Container(
-        [   dbc.Row([html.H1("Category Exploration"),
-                html.P(explanation_string, style={"fontSize": 16}),
-                dbc.Col([
-                html.P("Air Date Range:"),
-                dcc.DatePickerRange(
-                id="air-date-range-category-exploration",
-                min_date_allowed=date(1984, 9, 10),
-                max_date_allowed=date(2023, 6, 9),
-                initial_visible_month=date(2022, 7, 1),
-                end_date=date(2023, 6, 9),
-                start_date=date(1984, 9, 10),
-            ),
-            html.P("Select where to search:"),
-            dbc.Col(
-                dcc.Dropdown(
-                    ["Correct Response", "Category"],
-                    value="Category",
-                    id="search-eda",
-                    clearable=False,
-                ),
-
-            ),
-            html.P("Input search term:"),
-            dbc.Col(
-                dbc.Input(
-                    id="clue-input-eda",
-                    type="text",
-                    placeholder="Search for term here",
-                    debounce=True,
-                    size="lg",
-                    html_size="30",
-                    value="",
-                ),
-
-            ),
-            html.P("Number to Offset"),
-            dbc.Col(
-                dbc.Input(
-                    type="number", min=0, max=100000, step=5, value=0, id="offset"
-                ),
-
-                style={"marginBottom": "4.5em"},
-            )], width=4),
-            dbc.Col([dcc.Graph(id="bar-graph-top")], width=8)]),
+        [
             dbc.Row(
-                dbc.Col(id="clickdata-clues", width=12)#, style={"marginTop": "2.5em"}
+                [
+                    html.H1("Category Exploration"),
+                    html.P(explanation_string, style={"fontSize": 16}),
+                    dbc.Col(
+                        [
+                            html.P("Air Date Range:"),
+                            dcc.DatePickerRange(
+                                id="air-date-range-category-exploration",
+                                min_date_allowed=date(1984, 9, 10),
+                                max_date_allowed=date(2023, 6, 9),
+                                initial_visible_month=date(2022, 7, 1),
+                                end_date=date(2023, 6, 9),
+                                start_date=date(1984, 9, 10),
+                            ),
+                            html.P("Select where to search:"),
+                            dbc.Col(
+                                dcc.Dropdown(
+                                    ["Correct Response", "Category"],
+                                    value="Category",
+                                    id="search-eda",
+                                    clearable=False,
+                                ),
+                            ),
+                            html.P("Input search term:"),
+                            dbc.Col(
+                                dbc.Input(
+                                    id="clue-input-eda",
+                                    type="text",
+                                    placeholder="Search for term here",
+                                    debounce=True,
+                                    size="lg",
+                                    html_size="30",
+                                    value="",
+                                ),
+                            ),
+                            html.P("Number to Offset"),
+                            dbc.Col(
+                                dbc.Input(
+                                    type="number",
+                                    min=0,
+                                    max=100000,
+                                    step=5,
+                                    value=0,
+                                    id="offset",
+                                ),
+                                style={"marginBottom": "4.5em"},
+                            ),
+                        ],
+                        width=4,
+                    ),
+                    dbc.Col([dcc.Graph(id="bar-graph-top")], width=8),
+                ]
+            ),
+            dbc.Row(
+                dbc.Col(
+                    id="clickdata-clues", width=12
+                )  # , style={"marginTop": "2.5em"}
             ),
             dbc.Row(dbc.Col(id="clickdata-responses", width=12)),
         ],
@@ -105,31 +119,46 @@ def plot_categories(search_term, search_destination, offset, start_date, end_dat
     }
     search_destination_sql = search_destination_sql_dict[search_destination]
 
-    engine = create_engine(database_url)
-
+    conn = psycopg2.connect(database_url)
+    cur = conn.cursor()
+    clues_columns = [f"{search_destination_sql}", "count", "percent_correct"]
     if search_term != "":
-        query = f"""
-            SELECT {search_destination_sql} , COUNT({search_destination_sql} ) , SUM(CASE WHEN n_correct >= 1 then 1 else 0 end)::float/COUNT(correct_response) percent_correct
+        query_clues = """
+            SELECT {search_destination_sql} , COUNT({search_destination_sql}) , SUM(CASE WHEN n_correct >= 1 then 1 else 0 end)::float/COUNT(correct_response) percent_correct
             FROM clues_view
             
-            WHERE  {search_destination_sql} ilike '%%{search_term}%%' or {search_destination_sql} ilike '{search_term}%%' or {search_destination_sql} ilike '%%{search_term}' and correct_response <> '=' and air_date between '{start_date}' and '{end_date}'
+            WHERE  {search_destination_sql}  ILIKE '%{search_term}%'  and correct_response <> '=' and air_date between '{start_date}' and '{end_date}'
             GROUP BY {search_destination_sql}
             ORDER BY COUNT(correct_response) 
             LIMIT 15 OFFSET {offset}
-                       """
+                       """.format(
+            search_destination_sql=search_destination_sql,
+            start_date=start_date,
+            end_date=end_date,
+            offset=offset,
+            search_term=search_term,
+        )
     else:
-        query = f"""
-                SELECT {search_destination_sql}, COUNT({search_destination_sql} ) ,SUM(CASE WHEN n_correct >= 1 then 1 else 0 end)::float/COUNT(correct_response) percent_correct
+        query_clues = """
+                SELECT {search_destination_sql}, COUNT({search_destination_sql}), SUM(CASE WHEN n_correct >= 1 then 1 else 0 end)::float/COUNT(correct_response) percent_correct
                 FROM clues_view
                 WHERE air_date between '{start_date}' and '{end_date}' and correct_response <> '='
-                GROUP BY {search_destination_sql} 
+                GROUP BY {search_destination_sql}
                 HAVING COUNT(correct_response) > 0
-                ORDER BY COUNT({search_destination_sql} ) desc
-                LIMIT 15 OFFSET {offset}
-    """
+                ORDER BY COUNT({search_destination_sql}) desc
+                LIMIT 15 OFFSET {offset}""".format(
+            search_destination_sql=search_destination_sql,
+            start_date=start_date,
+            end_date=end_date,
+            offset=offset,
+        )
 
-    dff = pd.read_sql_query(query, con=engine)
-    dff = dff.sort_values("count", ascending=True)
+    cur.execute(query_clues)
+    results = cur.fetchall()
+    dff = pd.DataFrame(results, columns=clues_columns).sort_values(
+        "count", ascending=True
+    )
+
     dff["percent_correct"] = dff["percent_correct"].multiply(100).round(2)
     fig = px.bar(
         dff,
@@ -137,6 +166,7 @@ def plot_categories(search_term, search_destination, offset, start_date, end_dat
         x="count",
         color="percent_correct",
         color_continuous_scale="RdYlGn",
+        color_continuous_midpoint=85,
     )
     fig.update_layout(
         title={
@@ -144,9 +174,7 @@ def plot_categories(search_term, search_destination, offset, start_date, end_dat
             "font": {"size": 30},
         },
     )
-    #fig.update_xaxes(side="top")
 
-    engine.dispose()
     return fig
 
 
@@ -183,18 +211,7 @@ def update(clickdata, search_destination, start_date, end_date):
     else:
         clickdata_y = clickdata["points"][0]["y"]
 
-    engine = create_engine(database_url)
-
-    query = f"""
-    SELECT air_date, round_id, clue_value, category, clue, n_correct::float, correct_response
-    FROM clues_view
-    WHERE {search_destination_sql} ILIKE '{clickdata_y}' and  air_date between '{start_date}' and '{end_date}' and correct_response <> '='
-    ORDER BY air_date  desc, clue_value
-    
-    """
-
-    dff = pd.read_sql_query(query, con=engine)
-    dff.columns = [
+    clues_columns = [
         "Air Date",
         "Round",
         "Clue Value",
@@ -203,24 +220,30 @@ def update(clickdata, search_destination, start_date, end_date):
         "Number Correct",
         "Correct Response",
     ]
+    conn = psycopg2.connect(database_url)
+    cur = conn.cursor()
+
+    query_clues = """
+            SELECT air_date, round_id round, clue_value, category, clue, n_correct, correct_response
+            FROM clues_view
+            WHERE {search_destination_sql} ILIKE '%{term}%' and air_date between '{start_date}' and '{end_date}' 
+            ORDER BY air_date desc
+            """.format(
+        search_destination_sql=search_destination_sql,
+        term=clickdata_y,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    cur.execute(query_clues)
+    results = cur.fetchall()
+    dff = pd.DataFrame(results, columns=clues_columns)
 
     dff["Air Date"] = pd.DatetimeIndex(dff["Air Date"]).strftime("%Y-%m-%d")
-    data_to_show = dff[
-        [
-            "Air Date",
-            "Round",
-            "Clue Value",
-            "Category",
-            "Clue",
-            "Number Correct",
-            "Correct Response",
-        ]
-    ]
 
     table_clues = dash_table.DataTable(
-        data=data_to_show.to_dict("records"),
-        columns=[{"name": i, "id": i, "hideable": True} for i in data_to_show.columns],
-        style_cell={"textAlign": "left", "height": "auto", 'fontSize': 12},
+        data=dff.to_dict("records"),
+        columns=[{"name": i, "id": i, "hideable": True} for i in dff.columns],
+        style_cell={"textAlign": "left", "height": "auto", "fontSize": 12},
         page_size=8,
         style_data={"whiteSpace": "normal", "height": "auto"},
         sort_action="native",
@@ -228,26 +251,29 @@ def update(clickdata, search_destination, start_date, end_date):
         export_format="csv",
     )
 
-    pivot_table = data_to_show[data_to_show["Round"] != "FJ"].pivot_table(
+    pivot_table = dff[dff["Round"] != "FJ"].pivot_table(
         index=f"{search_destination_flipped}",
         values=["Number Correct"],
         aggfunc={"Number Correct": [np.size, np.sum]},
     )
     pivot_table.columns = [" ".join(col) for col in pivot_table.columns.values]
     pivot_table.columns = ["Count", "Answered Correct"]
-    pivot_table["Answered Correct %"] = pivot_table["Answered Correct"] / pivot_table["Count"]
-    pivot_table = pivot_table.sort_values(by="Count", ascending=False).reset_index().round(2)
+    pivot_table["Answered Correct %"] = (
+        pivot_table["Answered Correct"] / pivot_table["Count"]
+    )
+    pivot_table = (
+        pivot_table.sort_values(by="Count", ascending=False).reset_index().round(2)
+    )
 
     dash_pivot_table = dash_table.DataTable(
         data=pivot_table.to_dict("records"),
         columns=[{"name": i, "id": i} for i in pivot_table.columns],
         page_size=8,
         style_data={"whiteSpace": "normal", "height": "auto"},
-        style_cell={"textAlign": "left", "height": "auto", 'fontSize': 12},
+        style_cell={"textAlign": "left", "height": "auto", "fontSize": 12},
         sort_action="native",
         filter_action="native",
     )
-    engine.dispose()
 
     return dbc.Row(
         [

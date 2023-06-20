@@ -97,13 +97,13 @@ def get_champions(champion):
     fig_streak = px.histogram(dff, x="streak")
     fig_streak.add_vline(x=dff[dff["contestant"] == champion]["streak"].iloc[0])
     fig_streak.update_layout(
-        title=f"Returning Champion Winning Streaks, {champion} Selected"#, height=700
+        title=f"Returning Champion Winning Streaks, {champion} Selected"  # , height=700
     )
 
     fig_earnings = px.histogram(dff, x="winnings")
     fig_earnings.add_vline(x=dff[dff["contestant"] == champion]["winnings"].iloc[0])
     fig_earnings.update_layout(
-        title=f"Returning Champion Winnings, {champion} Selected"#, height=700
+        title=f"Returning Champion Winnings, {champion} Selected"  # , height=700
     )
 
     indicator = go.Figure()
@@ -183,7 +183,7 @@ def get_champions(champion):
     table_clues = dash_table.DataTable(
         data=dff_clues.to_dict("records"),
         columns=[{"name": i, "id": i} for i in dff_clues.columns],
-        style_cell={"textAlign": "left", "height": "auto", 'fontSize': 12},
+        style_cell={"textAlign": "left", "height": "auto", "fontSize": 12},
         page_size=10,
         style_data={"whiteSpace": "normal", "height": "auto"},
         sort_action="native",
