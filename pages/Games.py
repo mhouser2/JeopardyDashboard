@@ -9,12 +9,6 @@ import os
 font_size = 14
 database_url = os.getenv("database_url_jeopardy")
 
-engine = create_engine(database_url)
-
-shows_query = f"""SELECT CONCAT('Show Number #', show_number, ' - ', to_char(air_date, 'Day,  Month DD, YYYY')) FROM games_view ORDER BY show_number """
-shows = pd.read_sql(shows_query, con=engine).squeeze()
-
-engine.dispose()
 
 
 register_page(
@@ -29,8 +23,13 @@ register_page(
 explanation_string = """ This dashboard allows users to view all the clues from previous episodes of Jeopardy. Hovering over the tables will display the correct response. 
 The dashboard also shows the final scores for each contestant and the number of correct and incorrect responses. Finally there is a graph that shows the scores of each contestant over time
 """
+def serve_layout_games():
+    engine = create_engine(database_url)
+    shows_query = f"""SELECT CONCAT('Show Number #', show_number, ' - ', to_char(air_date, 'Day,  Month DD, YYYY')) FROM games_view ORDER BY show_number """
+    shows = pd.read_sql(shows_query, con=engine).squeeze()
 
-layout = dbc.Container(
+    engine.dispose()
+    return dbc.Container(
     [
         html.H1("Game Summary Dashboard"),
         html.P(explanation_string, style={"fontSize": 16}),
@@ -53,7 +52,7 @@ layout = dbc.Container(
     ],
     fluid=True,
 )
-
+layout = serve_layout_games
 
 @callback(
     Output(component_id="output-content2", component_property="children"),

@@ -28,6 +28,13 @@ explanation_string = """This dashboard creates a bar graph of the top 25 categor
 
 
 def serve_layout_responses():
+    conn = psycopg2.connect(database_url)
+    cur = conn.cursor()
+    query_max_date = "Select max(air_date) from games_view"
+    cur.execute(query_max_date)
+    results = cur.fetchone()[0]
+    cur.close()
+    conn.close()
     return dbc.Container(
         [
             dbc.Row(
@@ -40,9 +47,9 @@ def serve_layout_responses():
                             dcc.DatePickerRange(
                                 id="air-date-range-category-exploration",
                                 min_date_allowed=date(1984, 9, 10),
-                                max_date_allowed=date(2023, 6, 9),
-                                initial_visible_month=date(2022, 7, 1),
-                                end_date=date(2023, 6, 9),
+                                max_date_allowed=results,
+                                initial_visible_month=results,
+                                end_date=results,
                                 start_date=date(1984, 9, 10),
                             ),
                             html.P("Select where to search:"),
@@ -129,7 +136,7 @@ def plot_categories(search_term, search_destination, offset, start_date, end_dat
             
             WHERE  {search_destination_sql}  ILIKE '%{search_term}%'  and correct_response <> '=' and air_date between '{start_date}' and '{end_date}'
             GROUP BY {search_destination_sql}
-            ORDER BY COUNT(correct_response) 
+            ORDER BY COUNT(correct_response) desc
             LIMIT 15 OFFSET {offset}
                        """.format(
             search_destination_sql=search_destination_sql,

@@ -6,6 +6,7 @@ import plotly.express as px
 from datetime import date
 from sqlalchemy import create_engine
 import os
+import psycopg2
 
 col_width = 9
 font_size = 16
@@ -24,105 +25,107 @@ explanation_string = (
     " The default date range starts on November 26 2001, the first episode in which clue values doubled, however available data dates back to September 10 1984."
 )
 
-engine = create_engine(database_url)
-
-max_air_date_query = f"""SELECT MAX(air_date) FROM clues_view 
-                            """
-max_air_date = pd.read_sql(max_air_date_query, con=engine).squeeze().date()
-engine.dispose()
 
 
-max_air_date_string = max_air_date.strftime("%Y-%m-%d")
-layout = dbc.Container(
-    [
-        html.H1("Data Visualizations"),
-        html.P(explanation_string, style={"fontSize": font_size}),
-        dbc.Row(
-            dbc.Col(
+def serve_layout_visualizations():
+    conn = psycopg2.connect(database_url)
+    cur = conn.cursor()
+    query_max_date = "Select max(air_date) from games_view"
+    cur.execute(query_max_date)
+    max_date = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+
+    return dbc.Container(
+        [
+            html.H1("Data Visualizations"),
+            html.P(explanation_string, style={"fontSize": font_size}),
+            dbc.Row(
+                dbc.Col(
+                    [
+                        html.P("Select Show Air Date Range:"),
+                        dcc.DatePickerRange(
+                            id="air-date-range",
+                            min_date_allowed=date(1984, 9, 10),
+                            max_date_allowed=max_date,
+                            initial_visible_month=max_date,
+                            end_date=max_date,
+                            start_date=date(2001, 11, 26),
+                        ),
+                    ]
+                )
+            ),
+            html.Hr(),
+            dbc.Row(
                 [
-                    html.P("Select Show Air Date Range:"),
-                    dcc.DatePickerRange(
-                        id="air-date-range",
-                        min_date_allowed=date(1984, 9, 10),
-                        max_date_allowed=max_air_date,
-                        initial_visible_month=max_air_date,
-                        end_date=max_air_date,
-                        start_date=date(2001, 11, 26),
+                    dbc.Col([dcc.Graph(id="daily-double-graph")], width=col_width),
+                    dbc.Col(
+                        [
+                            html.P(
+                                "This heatmap shows the probability of a particular clue on the board showing the location of the daily double -"
+                                " a special clue that allows the contestant to wager however much money they have earned which only they can answer. "
+                                "Knowing where the daily double is most likely to show up allows contestants to optimize their strategy. One strategy could be selecting clues with low probabilities of holding the daily double so they can "
+                                "increase their score and then searching for the daily double in order to make a high wager. A more conservative strategy is to hunt for daily doubles early to prevent other contestants the opportunity to wager heavily.  ",
+                                style={"fontSize": font_size},
+                            )
+                        ],
+                        width=12 - col_width,
                     ),
                 ]
-            )
-        ),
-        html.Hr(),
-        dbc.Row(
-            [
-                dbc.Col([dcc.Graph(id="daily-double-graph")], width=col_width),
-                dbc.Col(
-                    [
-                        html.P(
-                            "This heatmap shows the probability of a particular clue on the board showing the location of the daily double -"
-                            " a special clue that allows the contestant to wager however much money they have earned which only they can answer. "
-                            "Knowing where the daily double is most likely to show up allows contestants to optimize their strategy. One strategy could be selecting clues with low probabilities of holding the daily double so they can "
-                            "increase their score and then searching for the daily double in order to make a high wager. A more conservative strategy is to hunt for daily doubles early to prevent other contestants the opportunity to wager heavily.  ",
-                            style={"fontSize": font_size},
-                        )
-                    ],
-                    width=12 - col_width,
-                ),
-            ]
-        ),
-        html.Hr(),
-        dbc.Row(
-            [
-                dbc.Col([dcc.Graph(id="answer-correct-graph")], width=col_width),
-                dbc.Col(
-                    [
-                        html.P(
-                            "This heatmap shows the probability of a clue being answered correctly by a contestant given its location on the board. As expected, as clue values increase, clue difficulty also increases. "
-                            "What's interesting is comparing the clues from the Jeopardy round to the Double Jeopardy round. The $800 clues in the Jeopardy round are slightly more difficult than the $800 clues in the Jeopardy round,"
-                            " and the $2000 clues in the Double Jeopardy Round are much more difficult than the $1000 clues in the Jeopardy round. ",
-                            style={"fontSize": font_size},
-                        )
-                    ],
-                    width=12 - col_width,
-                ),
-            ]
-        ),
-        html.Hr(),
-        dbc.Row(
-            [
-                dbc.Col([dcc.Graph(id="expected-value-graph")], width=col_width),
-                dbc.Col(
-                    [
-                        html.P(
-                            "This heatmap shows the expected value of each clue based on its location on the board. Effectively, this means that on average each clue in this location increases all contestants' scores by X amount. This metric combines both the clue's original value, as well as the number of contestants that answered correctly/incorrectly."
-                            "What's interesting here is that the $1,600 clues in the Double Jeopardy round are approximately as valuable as the $2,000 clues, because they are comparatively much easier to answer. Additionally, columns 2 and 6 have slightly higher expected values than the other columns, typically because these are more gimmicky categories. ",
-                            style={"fontSize": font_size},
-                        )
-                    ],
-                    width=12 - col_width,
-                ),
-            ]
-        ),
-        html.Hr(),
-        dbc.Row(
-            [
-                dbc.Col([dcc.Graph(id="fj-graph")], width=col_width),
-                dbc.Col(
-                    [
-                        html.P(
-                            "This graph shows the frequency of how many contestants answered Final Jeopardy correctly. Since regular clues are easier and only allow one person to be answered, it's interesting to see how all contestants perform when given the same opportunity against each other.",
-                            style={"fontSize": font_size},
-                        )
-                    ],
-                    width=12 - col_width,
-                ),
-            ]
-        ),
-    ],
-    fluid=True,
-)
+            ),
+            html.Hr(),
+            dbc.Row(
+                [
+                    dbc.Col([dcc.Graph(id="answer-correct-graph")], width=col_width),
+                    dbc.Col(
+                        [
+                            html.P(
+                                "This heatmap shows the probability of a clue being answered correctly by a contestant given its location on the board. As expected, as clue values increase, clue difficulty also increases. "
+                                "What's interesting is comparing the clues from the Jeopardy round to the Double Jeopardy round. The $800 clues in the Jeopardy round are slightly more difficult than the $800 clues in the Jeopardy round,"
+                                " and the $2000 clues in the Double Jeopardy Round are much more difficult than the $1000 clues in the Jeopardy round. ",
+                                style={"fontSize": font_size},
+                            )
+                        ],
+                        width=12 - col_width,
+                    ),
+                ]
+            ),
+            html.Hr(),
+            dbc.Row(
+                [
+                    dbc.Col([dcc.Graph(id="expected-value-graph")], width=col_width),
+                    dbc.Col(
+                        [
+                            html.P(
+                                "This heatmap shows the expected value of each clue based on its location on the board. Effectively, this means that on average each clue in this location increases all contestants' scores by X amount. This metric combines both the clue's original value, as well as the number of contestants that answered correctly/incorrectly."
+                                "What's interesting here is that the $1,600 clues in the Double Jeopardy round are approximately as valuable as the $2,000 clues, because they are comparatively much easier to answer. Additionally, columns 2 and 6 have slightly higher expected values than the other columns, typically because these are more gimmicky categories. ",
+                                style={"fontSize": font_size},
+                            )
+                        ],
+                        width=12 - col_width,
+                    ),
+                ]
+            ),
+            html.Hr(),
+            dbc.Row(
+                [
+                    dbc.Col([dcc.Graph(id="fj-graph")], width=col_width),
+                    dbc.Col(
+                        [
+                            html.P(
+                                "This graph shows the frequency of how many contestants answered Final Jeopardy correctly. Since regular clues are easier and only allow one person to be answered, it's interesting to see how all contestants perform when given the same opportunity against each other.",
+                                style={"fontSize": font_size},
+                            )
+                        ],
+                        width=12 - col_width,
+                    ),
+                ]
+            ),
+        ],
+        fluid=True,
+    )
 
-
+layout = serve_layout_visualizations
 @dash.callback(
     Output(component_id="answer-correct-graph", component_property="figure"),
     Output(component_id="daily-double-graph", component_property="figure"),
@@ -133,6 +136,10 @@ layout = dbc.Container(
 )
 def plot_prob_correct(start_date, end_date):
     engine = create_engine(database_url)
+
+    max_air_date_query = f"""SELECT MAX(air_date) FROM clues_view """
+    max_air_date_string = pd.read_sql(max_air_date_query, con=engine).squeeze().date().strftime("%Y-%m-%d")
+
     if start_date == "2001-11-26" and end_date == max_air_date_string:
         clues_query = f"""
                         SELECT * FROM clue_prob_correct
@@ -160,7 +167,6 @@ def plot_prob_correct(start_date, end_date):
         facet_col_wrap=2,
         color_continuous_scale="blues",
         text_auto=True,
-        # height=550,
         labels=dict(y="Row", color="Percent Answered Correctly"),
         x=columns,
         y=rows,
