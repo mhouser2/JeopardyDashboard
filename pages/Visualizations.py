@@ -32,7 +32,7 @@ def serve_layout_visualizations():
     cur = conn.cursor()
     query_max_date = "Select max(air_date) from games_view"
     cur.execute(query_max_date)
-    max_date = cur.fetchone()[0]
+    max_date = cur.fetchone()[0].date()
     cur.close()
     conn.close()
 
@@ -176,7 +176,7 @@ def plot_prob_correct(start_date, end_date):
     fig_prob.layout.annotations[1]["text"] = "Double Jeopardy Round"
     fig_prob.update_layout(
         title={
-            "text": "Probability of Clue being answered Correctly",
+            "text": "Probability of Clue being Answered Correctly",
             "font": {"size": 30},
             "xanchor": "center",
             "yanchor": "top",

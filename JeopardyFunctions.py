@@ -83,100 +83,100 @@ def pivot_game(show_number):
 
 
 def game_progression(show_number):
-    engine = create_engine(database_url)
-    query = f"""SELECT round_id, CAST(order_number as int), is_dd, clue_value,  correct_contestants, incorrect_contestants
-    FROM clues_view 
-    where show_number = '{show_number}' and round_id in ('J', 'DJ') ORDER BY round_id desc, order_number asc"""
+        engine = create_engine(database_url)
+        query = f"""SELECT round_id, CAST(order_number as int), is_dd, clue_value,  correct_contestants, incorrect_contestants
+        FROM clues_view 
+        where show_number = '{show_number}' and round_id in ('J', 'DJ') ORDER BY round_id desc, order_number asc"""
 
-    game = pd.read_sql(query, con=engine)
+        game = pd.read_sql(query, con=engine)
+        query_nicks = f""" SELECT contestant_1_nickname, contestant_2_nickname, returning_champion_nickname from games_view where show_number = {show_number}"""
+        name_data = pd.read_sql(query_nicks, con=engine).melt()
+        name_data["variable"] = name_data["variable"].str.split("_n").str[0]
+        name_data["first_name"] = name_data["value"].str.split(" ").str[0]
+        rename_dict = dict(zip(name_data["first_name"], name_data["variable"]))
 
-    query_nicks = f""" SELECT contestant_1_nickname, contestant_2_nickname, returning_champion_nickname from games_view where show_number = {show_number}"""
-    name_data = pd.read_sql(query_nicks, con=engine).melt()
-    name_data["variable"] = name_data["variable"].str.split("_n").str[0]
-    name_data["first_name"] = name_data["value"].str.split(" ").str[0]
-    rename_dict = dict(zip(name_data["first_name"], name_data["variable"]))
-
-    game.loc[:, "correct_contestants"] = (
-        game["correct_contestants"].replace(rename_dict, regex=True).replace(np.NaN, "")
-    )
-    game.loc[:, "incorrect_contestants"] = (
-        game["incorrect_contestants"]
-        .replace(rename_dict, regex=True)
-        .replace(np.NaN, "")
-    )
-
-    starting_state = np.array([0, 0, 0, 0])
-    contestant_1_score = 0
-    contestant_2_score = 0
-    returning_champion_score = 0
-
-    question_number = 0
-
-    contestant_1_correct = 0
-    contestant_2_correct = 0
-    returning_champion_correct = 0
-
-    contestant_1_incorrect = 0
-    contestant_2_incorrect = 0
-    returning_champion_incorrect = 0
-
-    for index, row in game.iterrows():
-        if "contestant_1" in row["correct_contestants"]:
-            contestant_1_score += row["clue_value"]
-            contestant_1_correct += 1
-        if "contestant_2" in row["correct_contestants"]:
-            contestant_2_score += row["clue_value"]
-            contestant_2_correct += 1
-        if "returning_champion" in row["correct_contestants"]:
-            returning_champion_score += row["clue_value"]
-            returning_champion_correct += 1
-
-        if "contestant_1" in row["incorrect_contestants"]:
-            contestant_1_score -= row["clue_value"]
-            contestant_1_incorrect += 1
-        if "contestant_2" in row["incorrect_contestants"]:
-            contestant_2_score -= row["clue_value"]
-            contestant_2_incorrect += 1
-        if "returning_champion" in row["incorrect_contestants"]:
-            returning_champion_score -= row["clue_value"]
-            returning_champion_incorrect += 1
-
-        question_number += 1
-
-        next_question = np.array(
-            [
-                question_number,
-                contestant_1_score,
-                contestant_2_score,
-                returning_champion_score,
-            ]
+        game.loc[:, "correct_contestants"] = (
+            game["correct_contestants"].replace(rename_dict, regex=True).replace(np.NaN, "")
+        )
+        game.loc[:, "incorrect_contestants"] = (
+            game["incorrect_contestants"]
+            .replace(rename_dict, regex=True)
+            .replace(np.NaN, "")
         )
 
-        starting_state = np.vstack((starting_state, next_question))
+        starting_state = np.array([0, 0, 0, 0])
+        contestant_1_score = 0
+        contestant_2_score = 0
+        returning_champion_score = 0
 
-    players = list(rename_dict.keys())
-    df = pd.DataFrame(starting_state)
+        question_number = 0
 
-    daily_doubles = game["is_dd"].to_numpy()
-    daily_doubles = pd.Series(np.insert(daily_doubles, 0, False)).replace(
-        [True, False], [1, 0]
-    )
-    df = pd.concat([df, daily_doubles], axis=1)
-    df.columns = ["Question Number", players[0], players[1], players[2], "Daily Double"]
+        contestant_1_correct = 0
+        contestant_2_correct = 0
+        returning_champion_correct = 0
 
-    query_final = f"""SELECT contestant_1_score, contestant_2_score, returning_champion_score from games_view where show_number = {show_number}"""
-    final_score = pd.read_sql(query_final, con=engine).to_numpy()
-    final_score = np.insert(final_score, 0, df["Question Number"].max() + 1)
-    final_score = pd.DataFrame(np.insert(final_score, 4, 0)).transpose()
-    final_score.columns = df.columns
-    df = pd.concat([df, final_score], axis=0).reset_index().drop(["index"], axis=1)
+        contestant_1_incorrect = 0
+        contestant_2_incorrect = 0
+        returning_champion_incorrect = 0
 
-    engine.dispose()
-    return (
-        df,
-        [contestant_1_correct, contestant_2_correct, returning_champion_correct],
-        [contestant_1_incorrect, contestant_2_incorrect, returning_champion_incorrect],
-    )
+        for index, row in game.iterrows():
+            if "contestant_1" in row["correct_contestants"]:
+                contestant_1_score += row["clue_value"]
+                contestant_1_correct += 1
+            if "contestant_2" in row["correct_contestants"]:
+                contestant_2_score += row["clue_value"]
+                contestant_2_correct += 1
+            if "returning_champion" in row["correct_contestants"]:
+                returning_champion_score += row["clue_value"]
+                returning_champion_correct += 1
+
+            if "contestant_1" in row["incorrect_contestants"]:
+                contestant_1_score -= row["clue_value"]
+                contestant_1_incorrect += 1
+            if "contestant_2" in row["incorrect_contestants"]:
+                contestant_2_score -= row["clue_value"]
+                contestant_2_incorrect += 1
+            if "returning_champion" in row["incorrect_contestants"]:
+                returning_champion_score -= row["clue_value"]
+                returning_champion_incorrect += 1
+
+            question_number += 1
+
+            next_question = np.array(
+                [
+                    question_number,
+                    contestant_1_score,
+                    contestant_2_score,
+                    returning_champion_score,
+                ]
+            )
+
+            starting_state = np.vstack((starting_state, next_question))
+
+        players = list(rename_dict.keys())
+        df = pd.DataFrame(starting_state)
+
+        daily_doubles = game["is_dd"].to_numpy()
+        daily_doubles = pd.Series(np.insert(daily_doubles, 0, False)).replace(
+            [True, False], [1, 0]
+        )
+
+        df = pd.concat([df, daily_doubles], axis=1)
+        df.columns = ["Question Number", players[0], players[1], players[2], "Daily Double"]
+
+        query_final = f"""SELECT contestant_1_score, contestant_2_score, returning_champion_score from games_view where show_number = {show_number}"""
+        final_score = pd.read_sql(query_final, con=engine).to_numpy()
+        final_score = np.insert(final_score, 0, df["Question Number"].max() + 1)
+        final_score = pd.DataFrame(np.insert(final_score, 4, 0)).transpose()
+        final_score.columns = df.columns
+        df = pd.concat([df, final_score], axis=0).reset_index().drop(["index"], axis=1)
+
+        engine.dispose()
+        return (
+            df,
+            [contestant_1_correct, contestant_2_correct, returning_champion_correct],
+            [contestant_1_incorrect, contestant_2_incorrect, returning_champion_incorrect],
+        )
 
 
 def find_data(search_destination, term, exact="Contains"):
