@@ -26,7 +26,6 @@ explanation_string = (
 )
 
 
-
 def serve_layout_visualizations():
     conn = psycopg2.connect(database_url)
     cur = conn.cursor()
@@ -125,7 +124,10 @@ def serve_layout_visualizations():
         fluid=True,
     )
 
+
 layout = serve_layout_visualizations
+
+
 @dash.callback(
     Output(component_id="answer-correct-graph", component_property="figure"),
     Output(component_id="daily-double-graph", component_property="figure"),
@@ -138,7 +140,12 @@ def plot_prob_correct(start_date, end_date):
     engine = create_engine(database_url)
 
     max_air_date_query = f"""SELECT MAX(air_date) FROM clues_view """
-    max_air_date_string = pd.read_sql(max_air_date_query, con=engine).squeeze().date().strftime("%Y-%m-%d")
+    max_air_date_string = (
+        pd.read_sql(max_air_date_query, con=engine)
+        .squeeze()
+        .date()
+        .strftime("%Y-%m-%d")
+    )
 
     if start_date == "2001-11-26" and end_date == max_air_date_string:
         clues_query = f"""
