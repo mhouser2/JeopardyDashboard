@@ -7,7 +7,6 @@ from datetime import date
 from sqlalchemy import create_engine
 import os
 import psycopg2
-
 col_width = 9
 font_size = 16
 database_url = os.getenv("database_url_jeopardy")
@@ -165,16 +164,15 @@ def plot_prob_correct(start_date, end_date):
     columns = [f"Column {i}" for i in range(1, 7)]
     rows = [f"Row {i}" for i in range(1, 6)]
 
-    data_prob = (
-        clues_df["percent_correct"].multiply(100).round(2).to_numpy().reshape(2, 5, 6)
-    )
+    data_prob =  clues_df["percent_correct"].multiply(100).round(4).to_numpy().reshape(2, 5, 6)
     fig_prob = px.imshow(
         data_prob,
         facet_col=0,
         facet_col_wrap=2,
         color_continuous_scale="blues",
+        height=550,
         text_auto=True,
-        labels=dict(y="Row", color="Percent Answered Correctly"),
+        #labels=dict(y="Row", color="Percent Answered Correctly"),
         x=columns,
         y=rows,
     )
@@ -195,12 +193,12 @@ def plot_prob_correct(start_date, end_date):
     )
     fig_prob.update_xaxes(visible=False)
     fig_prob.update_yaxes(visible=False)
-
     if start_date == "2001-11-26" and end_date == max_air_date_string:
         query_dd = f"""
                     SELECT * FROM daily_double_locations
                     """
     else:
+        print(start_date, end_date)
         query_dd = f"""
     
         with subq as (SELECT round_id, c.category_column, row_id, CASE WHEN LEFT(value,2) = 'DD' then 1 else 0 end is_dd
@@ -233,8 +231,8 @@ def plot_prob_correct(start_date, end_date):
         facet_col_wrap=2,
         color_continuous_scale="blues",
         text_auto=True,
-        # height=550,
-        labels=dict(y="Row", color="Daily Double Probability"),
+        height=550,
+        #labels=dict(y="Row", color="Daily Double Probability"),
         x=columns,
         y=rows,
     )
@@ -256,7 +254,7 @@ def plot_prob_correct(start_date, end_date):
     )
     fig_dd.update_xaxes(visible=False)
     fig_dd.update_yaxes(visible=False)
-
+    print(fig_dd)
     if start_date == "2001-11-26" and end_date == max_air_date_string:
         query_ev = f"""
         SELECT * FROM clue_ev
@@ -273,15 +271,16 @@ def plot_prob_correct(start_date, end_date):
     dff_ev = pd.read_sql_query(query_ev, con=engine)
     dff_ev.columns = ["round", "column", "row", "Expected Value"]
 
-    data_ev = dff_ev["Expected Value"].multiply(1).round(2).to_numpy().reshape(2, 5, 6)
+    data_ev = dff_ev["Expected Value"].multiply(1).round(4).to_numpy().reshape(2, 5, 6)
+
     fig_ev = px.imshow(
         data_ev,
         facet_col=0,
         facet_col_wrap=2,
         color_continuous_scale="blues",
         text_auto=True,
-        #    height=550,
-        labels=dict(y="Row", color="Clue Location Expected Value"),
+        height=550,
+        #labels=dict(y="Row", color="Clue Location Expected Value"),
         x=columns,
         y=rows,
     )

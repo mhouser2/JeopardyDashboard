@@ -454,7 +454,7 @@ def final_model_plot_data(show_number):
 
 
 def final_model(show_number):
-    lr = load("logistic_regression.joblib")
+    lr = load("JeopardyDashboard/logistic_regression.joblib")
 
     dff = game_progression_win_probability(show_number)
     dff["is_locked"] = dff.apply(
