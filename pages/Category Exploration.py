@@ -5,7 +5,6 @@ from dash import dash_table, Input, Output, dcc, html, register_page
 from datetime import date
 import plotly.express as px
 import numpy as np
-from sqlalchemy import create_engine
 import os
 import psycopg2
 
@@ -137,7 +136,7 @@ def plot_categories(search_term, search_destination, offset, start_date, end_dat
             WHERE  {search_destination_sql}  ILIKE '%{search_term}%'  and correct_response <> '=' and air_date between '{start_date}' and '{end_date}'
             GROUP BY {search_destination_sql}
             ORDER BY COUNT(correct_response) desc
-            LIMIT 15 OFFSET {offset}
+            LIMIT 25 OFFSET {offset}
                        """.format(
             search_destination_sql=search_destination_sql,
             start_date=start_date,
@@ -153,7 +152,7 @@ def plot_categories(search_term, search_destination, offset, start_date, end_dat
                 GROUP BY {search_destination_sql}
                 HAVING COUNT(correct_response) > 0
                 ORDER BY COUNT({search_destination_sql}) desc
-                LIMIT 15 OFFSET {offset}""".format(
+                LIMIT 25 OFFSET {offset}""".format(
             search_destination_sql=search_destination_sql,
             start_date=start_date,
             end_date=end_date,

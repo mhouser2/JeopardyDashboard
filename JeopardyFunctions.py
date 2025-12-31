@@ -10,7 +10,6 @@ database_url = os.getenv("database_url_jeopardy")
 
 def pivot_game(show_number):
     engine = create_engine(database_url)
-
     query = f"""SELECT * FROM clues_view where show_number = '{show_number}'"""
 
     game = pd.read_sql(query, con=engine)
@@ -97,12 +96,12 @@ def game_progression(show_number):
     rename_dict = dict(zip(name_data["first_name"], name_data["variable"]))
 
     game.loc[:, "correct_contestants"] = (
-        game["correct_contestants"].replace(rename_dict, regex=True).replace(np.NaN, "")
+        game["correct_contestants"].replace(rename_dict, regex=True).replace(np.nan, "")
     )
     game.loc[:, "incorrect_contestants"] = (
         game["incorrect_contestants"]
         .replace(rename_dict, regex=True)
-        .replace(np.NaN, "")
+        .replace(np.nan, "")
     )
 
     starting_state = np.array([0, 0, 0, 0])
@@ -274,19 +273,19 @@ def game_progression_win_probability(show_number):
     rename_dict = dict(zip(name_data["first_name"], name_data["variable"]))
 
     game.loc[:, "correct_contestants"] = (
-        game["correct_contestants"].replace(rename_dict, regex=True).replace(np.NaN, "")
+        game["correct_contestants"].replace(rename_dict, regex=True).replace(np.nan, "")
     )
     game.loc[:, "incorrect_contestants"] = (
         game["incorrect_contestants"]
         .replace(rename_dict, regex=True)
-        .replace(np.NaN, "")
+        .replace(np.nan, "")
     )
 
     game["value"] = (
         game["value"]
         .str.split("$")
         .str[1]
-        .replace("[\$,]", "", regex=True)
+        .replace(r"[\$,]", "", regex=True)
         .astype(float)
     )
 

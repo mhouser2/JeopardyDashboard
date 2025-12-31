@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from sqlalchemy import create_engine
 import os
+from dash.exceptions import PreventUpdate
 
 database_url = os.getenv("database_url_jeopardy")
 
@@ -39,6 +40,7 @@ def serve_layout_contestants():
                                 id="champion-select",
                                 options=[],
                                 value="Ken Jennings",
+                                search_value = 'Ken Jennings',
                                 clearable=False,
                             ),
                         ],
@@ -73,6 +75,31 @@ layout = serve_layout_contestants
 
 @callback(
     Output(component_id="champion-select", component_property="options"),
+    Input(component_id="champion-select", component_property="search_value")
+)
+def update_options(search_value):
+    print('search value: ', search_value)
+    engine = create_engine(database_url)
+    champions_query = f"""
+        SELECT contestant
+        from contestants c
+        INNER JOIN games_view g on c.contestant = g.returning_champion 
+        WHERE regular_season = True AND returning_champion_winnings is not null
+        GROUP BY contestant
+        ORDER BY max(returning_champion_winnings) desc
+    """
+
+    dff = pd.read_sql_query(champions_query, con=engine)
+    dff.columns = ["contestant"]
+
+    if not search_value:
+        raise PreventUpdate
+    
+    return dff["contestant"].squeeze()
+
+
+@callback(
+    
     Output(component_id="win-streak-hist", component_property="figure"),
     Output(component_id="winnings-hist", component_property="figure"),
     Output(component_id="champion-indicator", component_property="figure"),
@@ -82,7 +109,6 @@ layout = serve_layout_contestants
 )
 def get_champions(champion):
     engine = create_engine(database_url)
-
     champions_query = f"""
         SELECT contestant, max(returning_champion_streak::float), max(returning_champion_winnings), max(returning_champion_winnings::float)/max(returning_champion_streak::float) avg_winnings
         from contestants c
@@ -232,7 +258,6 @@ def get_champions(champion):
     )
 
     return (
-        dff["contestant"].squeeze(),
         fig_streak,
         fig_earnings,
         indicator,
